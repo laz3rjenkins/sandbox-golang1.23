@@ -1,5 +1,6 @@
 # Тесты запускать только в контейнере!
 import pytest
+from pytest_mock import MockerFixture
 import subprocess
 from unittest.mock import call
 from src.app.service.main import GoService
@@ -21,15 +22,20 @@ def test_execute__float_result__ok():
     # arrange
     data_in = '9.08'
     code = (
-        '#include<iostream>\n'
-        '#include<cmath>\n'
-        'using namespace std;\n'
-        'main(){\n'
-        '  float x;\n'
-        '  cin>>x;\n'
-        '  cout<<x-(floor(x))<<endl;\n'
+        'package main\n'
+        '\n'
+        'import (\n'
+        '    "fmt"\n'
+        '    "math"\n'
+        ')\n'
+        '\n'
+        'func main() {\n'
+        '    var x float64\n'
+        '    fmt.Scan(&x)\n'
+        '    fmt.Println(x - math.Floor(x))\n'
         '}'
     )
+
     file = GoFile(code)
     GoService._compile(file)
 
@@ -46,7 +52,6 @@ def test_execute__float_result__ok():
 
 
 def test_execute__data_in_is_integer__ok():
-
     """ Задача "Делёж яблок" """
 
     # arrange
@@ -55,14 +60,19 @@ def test_execute__data_in_is_integer__ok():
         '50'
     )
     code = (
-        '#include<iostream>\n'
-        'using namespace std;\n'
-        'int main(){\n'
-        '  int n, k;\ncin>>n>>k;\n'
-        '  cout<<k/n<<endl;\n'
-        '  cout<<k-(k/n)*n;\n'
+        'package main\n'
+        '\n'
+        'import "fmt"\n'
+        '\n'
+        'func main() {\n'
+        '    var n, k int\n'
+        '    fmt.Scan(&n)\n'
+        '    fmt.Scan(&k)\n'
+        '    fmt.Println(k / n)\n'
+        '    fmt.Println(k - (k/n)*n)\n'
         '}'
     )
+
     file = GoFile(code)
     GoService._compile(file)
 
@@ -82,19 +92,30 @@ def test_execute__data_in_is_integer__ok():
 
 
 def test_execute__data_in_is_string__ok():
-
     """ Задача "Удаление фрагмента" """
 
     # arrange
     data_in = 'In the hole in the ground there lived a hobbit'
     code = (
-        '#include<iostream>\n'
-        'using namespace std;\n'
-        'main(){\n'
-        '  string s;\n'
-        '  getline(cin, s);\n'
-        '  s = s.substr(0, s.find("h")) + s.substr(s.rfind("h") + 1);\n'
-        '  cout << s;\n'
+        'package main\n'
+        '\n'
+        'import (\n'
+        '    "fmt"\n'
+        '    "bufio"\n'
+        '    "os"\n'
+        '    "strings"\n'
+        ')\n'
+        '\n'
+        'func main() {\n'
+        '    reader := bufio.NewReader(os.Stdin)\n'
+        '    s, _ := reader.ReadString(\'\\n\')\n'
+        '    s = strings.TrimSpace(s)\n'
+        '    first := strings.Index(s, "h")\n'
+        '    last := strings.LastIndex(s, "h")\n'
+        '    if first != -1 && last != -1 && first < last {\n'
+        '        s = s[:first] + s[last+1:]\n'
+        '    }\n'
+        '    fmt.Print(s)\n'
         '}'
     )
     file = GoFile(code)
@@ -113,9 +134,13 @@ def test_execute__data_in_is_string__ok():
 
 
 def test_execute__empty_result__return_none():
-
     # arrange
-    code = 'main(){}'
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '}'
+    )
     file = GoFile(code)
     GoService._compile(file)
 
@@ -130,13 +155,15 @@ def test_execute__empty_result__return_none():
     file.remove()
 
 
-def test_execute__timeout__return_error(mocker):
+def test_execute__timeout__return_error(mocker: MockerFixture):
 
     # arrange
     code = (
-        'main(){\n'
-        '  while(1){}\n'
-        '  return 0;\n'
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    for {\n'
+        '    }\n'
         '}'
     )
     file = GoFile(code)
@@ -153,23 +180,27 @@ def test_execute__timeout__return_error(mocker):
 
 
 def test_execute__deep_recursive__error(mocker):
-
     """ Числа Фибоначчи """
 
     # arrange
     code = (
-        '#include<iostream>\n'
-        'using namespace std;\n'
-        'int fibonacci(int N){\n'
-        '  if ( N == 0 ) return 0;\n'
-        '  else if ( N == 1 ) return 1;\n'
-        '  else\n'
-        'return (fibonacci(N-1) + fibonacci(N-2));\n'
+        'package main\n'
+        '\n'
+        'import "fmt"\n'
+        '\n'
+        'func fibonacci(N int) int {\n'
+        '    if N == 0 {\n'
+        '        return 0\n'
+        '    } else if N == 1 {\n'
+        '        return 1\n'
+        '    } else {\n'
+        '        return fibonacci(N-1) + fibonacci(N-2)\n'
+        '    }\n'
         '}\n'
-        'int main(){\n'
-        '  cout<<fibonacci(50)<<endl;\n'
-        '  return 0;\n'
-        '}\n'
+        '\n'
+        'func main() {\n'
+        '    fmt.Println(fibonacci(50))\n'
+        '}'
     )
     file = GoFile(code)
     GoService._compile(file)
@@ -185,34 +216,39 @@ def test_execute__deep_recursive__error(mocker):
 
 
 def test_execute__write_access__error():
-
     """ Тест работает только в контейнере
         т.к. там ограничены права на запись в файловую систему """
 
     # arrange
     code = (
-        '#include <stdio.h>\n'
-        '#include <unistd.h>\n'
-        '#include <errno.h>\n'
-        '#include<iostream>\n'
-        'using namespace std;\n'
-        'main(){\n'
-        '  int returnval;\n'
-        '  returnval = access("/app/src/", W_OK);\n'
-        '  if (returnval == 0){\n'
-        '    cout<<"Write allowed."<<endl;\n'
-        '  } else {\n'
-        '    if (errno == EACCES){\n'
-        '      cout<<"Write Permission denied."<<endl;\n'
-        '    } else if (errno == ENOENT){\n'
-        '      cout<<"No such file or directory."<<endl;\n'
-        '    } else {\n'
-        '      cout<<"Write allowed."<<endl;\n'
+        'package main\n'
+        '\n'
+        'import (\n'
+        '    "fmt"\n'
+        '    "os"\n'
+        ')\n'
+        '\n'
+        'func main() {\n'
+        '    path := "/proc/"\n'
+        '    fileInfo, err := os.Stat(path)\n'
+        '    if err != nil {\n'
+        '        if os.IsNotExist(err) {\n'
+        '            fmt.Println("No such file or directory.")\n'
+        '        } else {\n'
+        '            fmt.Println("Write Permission denied.")\n'
+        '        }\n'
+        '        return\n'
         '    }\n'
-        '  }\n'
-        '  return 0;\n'
+        '    mode := fileInfo.Mode().Perm()\n'
+        '    _, err = os.OpenFile(path+"test.tmp", os.O_WRONLY|os.O_CREATE, mode)\n'
+        '    if err != nil {\n'
+        '        fmt.Println("Write Permission denied.")\n'
+        '    } else {\n'
+        '        fmt.Println("Write allowed.")\n'
+        '    }\n'
         '}'
     )
+
     file = GoFile(code)
     GoService._compile(file)
 
@@ -222,26 +258,32 @@ def test_execute__write_access__error():
     # assert
     assert 'Write Permission denied.' in exec_result.result
     assert exec_result.error is None
+
     file.remove()
 
 
 def test_execute__clear_error_message__ok(mocker):
-
     # arrange
-    code = "abnabra"
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    adqeqwd\n'
+        '}'
+    )
     raw_error_message = (
-        "/sandbox/1aab26a5-980c-4aae-9c8d-75cc78394aff.cpp:"
-        " In function ‘int main()’:\n"
-        "/sandbox/1aab26a5-980c-4aae-9c8d-75cc78394aff.cpp:2:5:"
-        " error: ‘adqeqwd’ was not declared in this scope\n"
+        "/sandbox/1aab26a5-980c-4aae-9c8d-75cc78394aff.go:"
+        " In function ‘main.main()’:\n"
+        "/sandbox/1aab26a5-980c-4aae-9c8d-75cc78394aff.go:2:5:"
+        " error: undefined: adqeqwd\n"
         "     adqeqwd\n"
         "     ^~~~~~~\n"
     )
     clear_error_message = (
-        "main.cpp:"
-        " In function ‘int main()’:\n"
-        "main.cpp:2:5:"
-        " error: ‘adqeqwd’ was not declared in this scope\n"
+        "main.go:"
+        " In function ‘main.main()’:\n"
+        "main.go:2:5:"
+        " error: undefined: adqeqwd\n"
         "     adqeqwd\n"
         "     ^~~~~~~\n"
     )
@@ -270,7 +312,14 @@ def test_execute__clear_error_message__ok(mocker):
 def test_execute__proc_exception__raise_exception(mocker):
 
     # arrange
-    code = 'Some code'
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    // Некорректный код для генерации ошибки исполнения\n'
+        '    Some code\n'
+        '}'
+    )
     data_in = 'Some data in'
     file = GoFile(code)
     mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
@@ -301,6 +350,16 @@ def test_compile__timeout__error(mocker):
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
 
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    for {\n'
+        '    }\n'
+        '}'
+    )
+    file_mock.code = code
+
     mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
     communicate_mock = mocker.patch(
         'subprocess.Popen.communicate',
@@ -323,6 +382,15 @@ def test_compile__exception__raise_exception(mocker):
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
+
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    Some invalid code\n'
+        '}'
+    )
+    file_mock.code = code
 
     mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
     communicate_mock = mocker.patch(
@@ -347,6 +415,16 @@ def test_compile__error__error(mocker):
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
+
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    Some invalid code\n'
+        '}'
+    )
+    file_mock.code = code
+
     compile_error = 'some error'
     mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
     communicate_mock = mocker.patch(
@@ -370,6 +448,16 @@ def test_compile__ok(mocker):
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
+
+    code = (
+        'package main\n'
+        '\n'
+        'func main() {\n'
+        '    // корректный код, ничего не делает\n'
+        '}'
+    )
+    file_mock.code = code
+
     mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
     communicate_mock = mocker.patch(
         'subprocess.Popen.communicate',
@@ -391,8 +479,8 @@ def test_check__true__ok():
     value = 'some value'
     right_value = 'some value'
     checker_func = (
-        'def checker(right_value: str, value: str) -> bool:'
-        '  return right_value == value'
+        'def checker(right_value: str, value: str) -> bool:\n'
+        '    return right_value == value'
     )
 
     # act
@@ -412,8 +500,8 @@ def test_check__false__ok():
     value = 'invalid value'
     right_value = 'some value'
     checker_func = (
-        'def checker(right_value: str, value: str) -> bool:'
-        '  return right_value == value'
+        'def checker(right_value: str, value: str) -> bool:\n'
+        '    return right_value == value'
     )
 
     # act
@@ -431,8 +519,8 @@ def test_check__invalid_checker_func__raise_exception():
 
     # arrange
     checker_func = (
-        'def my_checker(right_value: str, value: str) -> bool:'
-        '  return right_value == value'
+        'def my_checker(right_value: str, value: str) -> bool:\n'
+        '    return right_value == value'
     )
 
     # act
@@ -451,8 +539,8 @@ def test_check__checker_func_no_return_instruction__raise_exception():
 
     # arrange
     checker_func = (
-        'def checker(right_value: str, value: str) -> bool:'
-        '  result = right_value == value'
+        'def checker(right_value: str, value: str) -> bool:\n'
+        '    result = right_value == value'
     )
 
     # act
@@ -471,8 +559,8 @@ def test_check__checker_func_return_not_bool__raise_exception():
 
     # arrange
     checker_func = (
-        'def checker(right_value: str, value: str) -> bool:'
-        '  return None'
+        'def checker(right_value: str, value: str) -> bool:\n'
+        '    return None'
     )
 
     # act
@@ -491,9 +579,9 @@ def test_check__checker_func__invalid_syntax__raise_exception():
 
     # arrange
     checker_func = (
-        'def checker(right_value: str, value: str) -> bool:'
-        '  include(invalid syntax here)'
-        '  return True'
+        'def checker(right_value: str, value: str) -> bool:\n'
+        '    include(invalid syntax here)\n'
+        '    return True'
     )
 
     # act
@@ -506,29 +594,26 @@ def test_check__checker_func__invalid_syntax__raise_exception():
 
     # assert
     assert ex.value.message == messages.MSG_5
-    assert ex.value.details == 'invalid syntax (<string>, line 1)'
+    assert ex.value.details.startswith('invalid syntax')
 
 
 def test_debug__compile_is_success__ok(mocker):
-
     # arrange
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
+    file_mock.filepath_go = '/tmp/main.go'
+    file_mock.filepath_out = '/tmp/main_out'
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
-    compile_mock = mocker.patch(
-        'app.service.main.GoService._compile',
-        return_value=None
-    )
+
+    compile_mock = mocker.patch.object(GoService, '_compile', return_value=None)
     execute_result = ExecuteResult(
         result='some execute code result',
         error='some compilation error'
     )
-    execute_mock = mocker.patch(
-        'app.service.main.GoService._execute',
-        return_value=execute_result
-    )
+    execute_mock = mocker.patch.object(GoService, '_execute', return_value=execute_result)
+
     data = DebugData(
-        code='some code',
+        code='package main\nfunc main() {}',
         data_in='some data_in'
     )
 
@@ -547,17 +632,16 @@ def test_debug__compile_is_success__ok(mocker):
 
 
 def test_debug__compile_return_error__ok(mocker):
-
     # arrange
     compile_error = 'some error'
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
-    compile_mock = mocker.patch(
-        'app.service.main.GoService._compile',
-        return_value=compile_error
-    )
-    execute_mock = mocker.patch('app.service.main.GoService._execute')
+
+    # патчим методы класса напрямую
+    compile_mock = mocker.patch.object(GoService, '_compile', return_value=compile_error)
+    execute_mock = mocker.patch.object(GoService, '_execute')
+
     data = DebugData(
         code='some code',
         data_in='some data_in'
@@ -575,36 +659,23 @@ def test_debug__compile_return_error__ok(mocker):
 
 
 def test_testing__compile_is_success__ok(mocker):
-
     # arrange
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
-    compile_mock = mocker.patch(
-        'app.service.main.GoService._compile',
-        return_value=None
-    )
+
+    # патчим методы класса напрямую
+    compile_mock = mocker.patch.object(GoService, '_compile', return_value=None)
     execute_result = ExecuteResult(
         result='some execute code result',
         error='some compilation error'
     )
-    execute_mock = mocker.patch(
-        'app.service.main.GoService._execute',
-        return_value=execute_result
-    )
+    execute_mock = mocker.patch.object(GoService, '_execute', return_value=execute_result)
     check_result = mocker.Mock()
-    check_mock = mocker.patch(
-        'app.service.main.GoService._check',
-        return_value=check_result
-    )
-    test_1 = TestData(
-        data_in='some test input 1',
-        data_out='some test out 1'
-    )
-    test_2 = TestData(
-        data_in='some test input 2',
-        data_out='some test out 2'
-    )
+    check_mock = mocker.patch.object(GoService, '_check', return_value=check_result)
+
+    test_1 = TestData(data_in='some test input 1', data_out='some test out 1')
+    test_2 = TestData(data_in='some test input 2', data_out='some test out 2')
 
     data = TestsData(
         code='some code',
@@ -618,26 +689,12 @@ def test_testing__compile_is_success__ok(mocker):
     # assert
     compile_mock.assert_called_once_with(file_mock)
     assert execute_mock.call_args_list == [
-        call(
-            file=file_mock,
-            data_in=test_1.data_in
-        ),
-        call(
-            file=file_mock,
-            data_in=test_2.data_in
-        )
+        call(file=file_mock, data_in=test_1.data_in),
+        call(file=file_mock, data_in=test_2.data_in)
     ]
     assert check_mock.call_args_list == [
-        call(
-            checker_func=data.checker,
-            right_value=test_1.data_out,
-            value=execute_result.result
-        ),
-        call(
-            checker_func=data.checker,
-            right_value=test_2.data_out,
-            value=execute_result.result
-        )
+        call(checker_func=data.checker, right_value=test_1.data_out, value=execute_result.result),
+        call(checker_func=data.checker, right_value=test_2.data_out, value=execute_result.result)
     ]
     file_mock.remove.assert_called_once()
     tests_result = testing_result.tests
@@ -651,26 +708,18 @@ def test_testing__compile_is_success__ok(mocker):
 
 
 def test_testing__compile_return_error__ok(mocker):
-
     # arrange
     file_mock = mocker.Mock()
     file_mock.remove = mocker.Mock()
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
+
     compile_error = 'some error'
-    compile_mock = mocker.patch(
-        'app.service.main.GoService._compile',
-        return_value=compile_error
-    )
-    execute_mock = mocker.patch('app.service.main.GoService._execute')
-    check_mock = mocker.patch('app.service.main.GoService._check')
-    test_1 = TestData(
-        data_in='some test input 1',
-        data_out='some test out 1'
-    )
-    test_2 = TestData(
-        data_in='some test input 2',
-        data_out='some test out 2'
-    )
+    compile_mock = mocker.patch.object(GoService, '_compile', return_value=compile_error)
+    execute_mock = mocker.patch.object(GoService, '_execute')
+    check_mock = mocker.patch.object(GoService, '_check')
+
+    test_1 = TestData(data_in='some test input 1', data_out='some test out 1')
+    test_2 = TestData(data_in='some test input 2', data_out='some test out 2')
 
     data = TestsData(
         code='some code',
@@ -686,11 +735,10 @@ def test_testing__compile_return_error__ok(mocker):
     execute_mock.assert_not_called()
     check_mock.assert_not_called()
     file_mock.remove.assert_called_once()
+
     tests_result = testing_result.tests
     assert len(tests_result) == 2
-    assert tests_result[0].result is None
-    assert tests_result[0].error == compile_error
-    assert tests_result[0].ok is False
-    assert tests_result[1].result is None
-    assert tests_result[1].error == compile_error
-    assert tests_result[1].ok is False
+    for test_res in tests_result:
+        assert test_res.result is None
+        assert test_res.error == compile_error
+        assert test_res.ok is False

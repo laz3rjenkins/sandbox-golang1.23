@@ -18,6 +18,7 @@ RUN curl -OL https://go.dev/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz && \
     rm go${GOLANG_VERSION}.linux-amd64.tar.gz
 
 ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PYTHONPATH=/app/src
 
 RUN pip install --upgrade pip && pip install pipenv
 
