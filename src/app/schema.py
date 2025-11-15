@@ -1,5 +1,6 @@
 from typing import Optional
 from marshmallow import Schema, ValidationError
+from marshmallow import INCLUDE
 from marshmallow.fields import (
     Nested,
     Field,
@@ -46,6 +47,8 @@ class DebugSchema(Schema):
 
 
 class TestSchema(Schema):
+    class Meta:
+        unknown = INCLUDE
 
     data_in = StrField(load_only=True)
     data_out = StrField(required=True, load_only=True)
@@ -72,12 +75,11 @@ class TestsSchema(Schema):
         return TestsData(**data)
 
     @pre_dump
-    def calculate_properties(self, data: TestsData, **kwargs):
-        data.num = len(data.tests)
-        for test in data.tests:
-            if test.ok:
-                data.num_ok += 1
-        data.ok = data.num == data.num_ok
+    def calculate_properties(self, data, **kwargs):
+        if isinstance(data, TestsData):
+            data.num = len(data.tests)
+            data.num_ok = sum(1 for t in data.tests if t.ok)
+            data.ok = (data.num == data.num_ok)
         return data
 
 
@@ -107,5 +109,5 @@ class ServiceExceptionSchema(Schema):
     def dump_details(self, obj):
         desc = getattr(obj, "description", None)
         if hasattr(desc, "details"):
-            return desc.message
+            return desc.details
         return str(desc)

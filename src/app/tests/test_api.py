@@ -22,7 +22,7 @@ def test_debug__ok(client, mocker):
         error='some error'
     )
     debug_mock = mocker.patch(
-        'app.service.main.GoService.debug',
+        'src.app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -53,7 +53,7 @@ def test_debug__not_error__ok(client, mocker):
         error=None
     )
     debug_mock = mocker.patch(
-        'app.service.main.GoService.debug',
+        'src.app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -84,7 +84,7 @@ def test_debug__not_result__ok(client, mocker):
         error='some error'
     )
     debug_mock = mocker.patch(
-        'app.service.main.GoService.debug',
+        'src.app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -99,7 +99,6 @@ def test_debug__not_result__ok(client, mocker):
 
 
 def test_debug__service_exception__internal_error(client, mocker):
-
     # arrange
     request_data = {
         'code': 'some code',
@@ -111,7 +110,7 @@ def test_debug__service_exception__internal_error(client, mocker):
     )
 
     mocker.patch(
-        'app.service.main.GoService.debug',
+        'src.app.service.main.GoService.debug',
         side_effect=service_ex
     )
 
@@ -130,7 +129,7 @@ def test_debug__validation_error__bad_request(client, mocker):
     request_data = {
         'data_in': 'some input'
     }
-    service_mock = mocker.patch('app.service.main.GoService.debug')
+    service_mock = mocker.patch('src.app.service.main.GoService.debug')
 
     # act
     response = client.post('/debug/', json=request_data)
@@ -145,20 +144,13 @@ def test_debug__validation_error__bad_request(client, mocker):
 
 
 def test_testing__ok(client, mocker):
-
     # arrange
     request_data = {
         'code': 'some code',
         'checker': 'some func',
         'tests': [
-            {
-                'data_in': 'some test 1 input',
-                'data_out': 'some test 1 out'
-            },
-            {
-                'data_in': 'some test 2 input',
-                'data_out': 'some test 2 out'
-            }
+            {'data_in': 'some test 1 input', 'data_out': 'some test 1 out'},
+            {'data_in': 'some test 2 input', 'data_out': 'some test 2 out'}
         ]
     }
 
@@ -166,35 +158,20 @@ def test_testing__ok(client, mocker):
         code='some code',
         checker='some func',
         tests=[
-            TestData(
-                data_in='some test 1 input',
-                data_out='some test 1 out'
-            ),
-            TestData(
-                data_in='some test 2 input',
-                data_out='some test 2 out'
-            )
+            TestData(data_in='some test 1 input', data_out='some test 1 out'),
+            TestData(data_in='some test 2 input', data_out='some test 2 out')
         ]
     )
+
     testing_result = TestsData(
-        ok=True,
-        num=2,
-        num_ok=2,
         tests=[
-            TestData(
-                result='some result 1',
-                error='some error 1',
-                ok=True
-            ),
-            TestData(
-                result='some result 2',
-                error='some error 2',
-                ok=False
-            )
+            TestData(result='some result 1', error='some error 1', ok=True),
+            TestData(result='some result 2', error='some error 2', ok=False)
         ]
     )
+
     testing_mock = mocker.patch(
-        'app.service.main.GoService.testing',
+        'src.app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -203,16 +180,18 @@ def test_testing__ok(client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert response.json['ok'] == testing_result.ok
-    assert response.json['num'] == testing_result.num
-    assert response.json['num_ok'] == testing_result.num_ok
+    assert response.json['ok'] is False
+    assert response.json['num'] == 2
+    assert response.json['num_ok'] == 1
     assert response.json['tests'][0]['result'] == 'some result 1'
     assert response.json['tests'][0]['error'] == 'some error 1'
     assert response.json['tests'][0]['ok'] is True
     assert response.json['tests'][1]['result'] == 'some result 2'
     assert response.json['tests'][1]['error'] == 'some error 2'
     assert response.json['tests'][1]['ok'] is False
+
     testing_mock.assert_called_once_with(serialized_data)
+
 
 
 def test_testing__not_test_result__ok(client, mocker):
@@ -252,7 +231,7 @@ def test_testing__not_test_result__ok(client, mocker):
         ]
     )
     testing_mock = mocker.patch(
-        'app.service.main.GoService.testing',
+        'src.app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -307,7 +286,7 @@ def test_testing__not_test_error__ok(client, mocker):
         ]
     )
     testing_mock = mocker.patch(
-        'app.service.main.GoService.testing',
+        'src.app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -348,7 +327,7 @@ def test_testing__service_exception__internal_error(client, mocker):
     )
 
     mocker.patch(
-        'app.service.main.GoService.testing',
+        'src.app.main.GoService.testing',
         side_effect=service_ex
     )
 
