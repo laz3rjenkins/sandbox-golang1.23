@@ -4,7 +4,8 @@ from pytest_mock import MockerFixture
 import subprocess
 from unittest.mock import call
 from src.app.service.main import GoService
-from src.app import config, messages
+from src.app import config
+from src.app.service import messages
 from src.app.entities import (
     DebugData,
     TestsData,
@@ -443,34 +444,35 @@ def test_compile__error__error(mocker):
 
 
 def test_compile__ok(mocker):
-
-    # arrange
     file_mock = mocker.Mock()
-    file_mock.remove = mocker.Mock()
+    file_mock.filepath_out = '/tmp/fake_out'
+    file_mock.filepath_go = '/tmp/fake_go'
+
     mocker.patch.object(GoFile, '__new__', return_value=file_mock)
 
-    code = (
-        'package main\n'
-        '\n'
-        'func main() {\n'
-        '    // корректный код, ничего не делает\n'
-        '}'
-    )
-    file_mock.code = code
+    mock_chmod = mocker.patch('os.chmod')
+    mock_chown = mocker.patch('os.chown')
+    mocker.patch('os.path.dirname', return_value='/tmp')
 
-    mocker.patch.object(subprocess.Popen, '__init__', return_value=None)
-    communicate_mock = mocker.patch(
-        'subprocess.Popen.communicate',
-        return_value=(None, None)
-    )
-    kill_mock = mocker.patch('subprocess.Popen.kill')
+    mock_popen = mocker.patch('subprocess.Popen')
+    mock_proc = mock_popen.return_value
+
+    mock_proc.communicate.return_value = (None, None)
+    mock_proc.returncode = 0
 
     # act
     GoService._compile(file_mock)
 
     # assert
-    communicate_mock.assert_called_once_with(timeout=config.TIMEOUT)
-    kill_mock.assert_called_once()
+    mock_popen.assert_called_once_with(
+        args=['go', 'build', '-o', file_mock.filepath_out, file_mock.filepath_go],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    mock_chmod.assert_called_once()
+    mock_chown.assert_called_once()
 
 
 def test_check__true__ok():

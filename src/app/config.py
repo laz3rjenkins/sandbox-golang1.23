@@ -5,4 +5,5 @@ from tempfile import gettempdir
 
 TIMEOUT = 5  # seconds
 SANDBOX_USER_UID = int(env.get('SANDBOX_USER_UID', os.getuid()))
+SANDBOX_USER_GID = int(env.get('SANDBOX_USER_GID', os.getgid()))
 SANDBOX_DIR = env.get('SANDBOX_DIR', gettempdir())

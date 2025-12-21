@@ -1,6 +1,6 @@
 import re
 from typing import Optional
-from src.app import messages
+from src.app.service import messages
 
 
 def clean_str(value: Optional[str]) -> Optional[str]:

@@ -1,3 +1,5 @@
+version: "3.3"
+
 services:
   sandbox-go:
     build:
@@ -6,28 +8,26 @@ services:
       args:
         - SANDBOX_USER_UID=999
         - SANDBOX_DIR=/sandbox
-    env_file:
-      - ../.env
     image: sandbox-go
     container_name: sandbox-go
     volumes:
       - ../src:/app/src
       - import:/sandbox/import:ro
     ports:
-      - "9002:9002"
+      - "9010:9010"
     environment:
       - SANDBOX_USER_UID=999
       - SANDBOX_DIR=/sandbox
     restart: on-failure
-    command: gunicorn --pythonpath '/app' --bind 0:9002 src.app.main:app --reload -w 1
+    command: gunicorn --pythonpath '/app' --bind 0:9010 src.app.main:app --reload -w 1
 
     networks:
       - localhost
 
 networks:
   localhost:
-#    external: true
+    external: true
 
 volumes:
   import:
-#    external: true
+    external: true

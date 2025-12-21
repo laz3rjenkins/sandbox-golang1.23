@@ -1,4 +1,5 @@
 import os
+import stat
 import subprocess
 from typing import Optional
 from src.app.service.entities import GoFile
@@ -7,8 +8,8 @@ from src.app.entities import (
     TestsData,
 
 )
-from src.app import config, messages
-from src.app.service import exceptions
+from src.app import config
+from src.app.service import exceptions, messages
 from src.app.service.entities import ExecuteResult
 from src.app.utils import clean_str, clean_error
 
@@ -16,16 +17,10 @@ class GoService:
     @classmethod
     def _preexec_fn(cls):
         def change_process_user():
-            import sys, traceback
-            try:
-                os.setgid(config.SANDBOX_USER_UID)
-                os.setuid(config.SANDBOX_USER_UID)
-            except Exception as ex:
-                print("1111=== preexec_fn error ===", ex)
-                traceback.print_exc()
-                raise
+            os.setgid(config.SANDBOX_USER_GID)
+            os.setuid(config.SANDBOX_USER_UID)
 
-        return change_process_user()
+        return change_process_user
 
     @classmethod
     def _compile(cls, file: GoFile) -> Optional[str]:
@@ -37,17 +32,23 @@ class GoService:
                 stderr=subprocess.PIPE,
                 text=True
             )
-        except Exception as ex:
-            raise exceptions.CompileException(details=str(ex))
-
-        try:
             _, error = proc.communicate(timeout=config.TIMEOUT)
+
+            if not error:
+
+                os.chmod(file.filepath_out, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                dir_path = os.path.dirname(file.filepath_out)
+                # os.chmod(dir_path, 0o755)
+                os.chown(dir_path, config.SANDBOX_USER_UID, config.SANDBOX_USER_GID)
+
+
         except subprocess.TimeoutExpired:
             error = messages.MSG_1
         except Exception as ex:
             raise exceptions.CompileException(details=str(ex))
         finally:
-            proc.kill()
+            if 'proc' in locals():
+                proc.kill()
 
         return clean_error(error)
 
@@ -64,7 +65,7 @@ class GoService:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            # preexec_fn=cls._preexec_fn,
+            preexec_fn=cls._preexec_fn(),
             text=True
         )
         try:
