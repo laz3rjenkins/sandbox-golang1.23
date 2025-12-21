@@ -32,5 +32,5 @@ docker compose up -d
 ```
 Контейнер будет доступен по порту 9002:
 ```bash
-http://localhost:9002/
+http://localhost:9010/
 ```
