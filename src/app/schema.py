@@ -12,13 +12,13 @@ from marshmallow.decorators import (
     post_load,
     pre_dump
 )
-from src.app.entities import (
+from app.entities import (
     DebugData,
     TestData,
     TestsData
 )
-from src.app.utils import clean_str
-from src.app.service.exceptions import ServiceException
+from app.utils import clean_str
+from app.service.exceptions import ServiceException
 
 
 class StrField(Field):

@@ -2,16 +2,16 @@ import os
 import stat
 import subprocess
 from typing import Optional
-from src.app.service.entities import GoFile
-from src.app.entities import (
+from app.service.entities import GoFile
+from app.entities import (
     DebugData,
     TestsData,
 
 )
-from src.app import config
-from src.app.service import exceptions, messages
-from src.app.service.entities import ExecuteResult
-from src.app.utils import clean_str, clean_error
+from app import config
+from app.service import exceptions, messages
+from app.service.entities import ExecuteResult
+from app.utils import clean_str, clean_error
 
 class GoService:
     @classmethod

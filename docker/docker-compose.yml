@@ -1,28 +1,28 @@
 version: "3.3"
 
 services:
-  sandbox-go:
+  sandbox-go123:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile
       args:
         - SANDBOX_USER_UID=999
         - SANDBOX_DIR=/sandbox
-    image: sandbox-go
-    container_name: sandbox-go
+      dockerfile: ./docker/Dockerfile
+    container_name: sandbox-go123
+    image: sandbox-go123
     volumes:
       - ../src:/app/src
       - import:/sandbox/import:ro
     ports:
       - "9010:9010"
+    networks:
+      - localhost
     environment:
       - SANDBOX_USER_UID=999
       - SANDBOX_DIR=/sandbox
+      - PYTHONPATH=/app/src
     restart: on-failure
-    command: gunicorn --pythonpath '/app' --bind 0:9010 src.app.main:app --reload -w 1
-
-    networks:
-      - localhost
+    command: gunicorn --pythonpath '/app/src' --bind 0:9010 app.main:app --reload -w 1
 
 networks:
   localhost:

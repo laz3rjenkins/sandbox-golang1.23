@@ -3,18 +3,18 @@ import pytest
 from pytest_mock import MockerFixture
 import subprocess
 from unittest.mock import call
-from src.app.service.main import GoService
-from src.app import config
-from src.app.service import messages
-from src.app.entities import (
+from app.service.main import GoService
+from app import config
+from app.service import messages
+from app.entities import (
     DebugData,
     TestsData,
     TestData
 )
-from src.app.service.entities import ExecuteResult
-from src.app.service.entities import GoFile
-from src.app.service.exceptions import CheckerException
-from src.app.service import exceptions
+from app.service.entities import ExecuteResult
+from app.service.entities import GoFile
+from app.service.exceptions import CheckerException
+from app.service import exceptions
 
 
 def test_execute__float_result__ok():

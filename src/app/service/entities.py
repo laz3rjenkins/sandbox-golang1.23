@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 import tempfile
 
-from src.app import config
+from app import config
 
 ExecuteResult = namedtuple('ExecuteResult', ('result', 'error'))
 

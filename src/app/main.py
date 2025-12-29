@@ -6,15 +6,15 @@ from flask import (
 )
 from marshmallow import ValidationError
 
-from src.app.service.main import GoService
+from app.service.main import GoService
 
-from src.app.schema import (
+from app.schema import (
     DebugSchema,
     TestsSchema,
     BadRequestSchema,
     ServiceExceptionSchema,
 )
-from src.app.service.exceptions import ServiceException
+from app.service.exceptions import ServiceException
 
 
 def create_app():
@@ -62,6 +62,4 @@ def create_app():
             return schema.dump(data)
     return app
 
-
-#  python3 -m src.app.main
 app = create_app()

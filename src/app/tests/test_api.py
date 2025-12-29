@@ -1,9 +1,9 @@
-from src.app.entities import (
+from app.entities import (
     DebugData,
     TestsData,
     TestData
 )
-from src.app.service.exceptions import ServiceException
+from app.service.exceptions import ServiceException
 
 
 def test_debug__ok(client, mocker):
@@ -22,7 +22,7 @@ def test_debug__ok(client, mocker):
         error='some error'
     )
     debug_mock = mocker.patch(
-        'src.app.service.main.GoService.debug',
+        'app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -53,7 +53,7 @@ def test_debug__not_error__ok(client, mocker):
         error=None
     )
     debug_mock = mocker.patch(
-        'src.app.service.main.GoService.debug',
+        'app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -84,7 +84,7 @@ def test_debug__not_result__ok(client, mocker):
         error='some error'
     )
     debug_mock = mocker.patch(
-        'src.app.service.main.GoService.debug',
+        'app.service.main.GoService.debug',
         return_value=debug_result
     )
 
@@ -110,7 +110,7 @@ def test_debug__service_exception__internal_error(client, mocker):
     )
 
     mocker.patch(
-        'src.app.service.main.GoService.debug',
+        'app.service.main.GoService.debug',
         side_effect=service_ex
     )
 
@@ -129,7 +129,7 @@ def test_debug__validation_error__bad_request(client, mocker):
     request_data = {
         'data_in': 'some input'
     }
-    service_mock = mocker.patch('src.app.service.main.GoService.debug')
+    service_mock = mocker.patch('app.service.main.GoService.debug')
 
     # act
     response = client.post('/debug/', json=request_data)
@@ -171,7 +171,7 @@ def test_testing__ok(client, mocker):
     )
 
     testing_mock = mocker.patch(
-        'src.app.main.GoService.testing',
+        'app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -231,7 +231,7 @@ def test_testing__not_test_result__ok(client, mocker):
         ]
     )
     testing_mock = mocker.patch(
-        'src.app.main.GoService.testing',
+        'app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -286,7 +286,7 @@ def test_testing__not_test_error__ok(client, mocker):
         ]
     )
     testing_mock = mocker.patch(
-        'src.app.main.GoService.testing',
+        'app.main.GoService.testing',
         return_value=testing_result
     )
 
@@ -327,7 +327,7 @@ def test_testing__service_exception__internal_error(client, mocker):
     )
 
     mocker.patch(
-        'src.app.main.GoService.testing',
+        'app.main.GoService.testing',
         side_effect=service_ex
     )
 
@@ -365,4 +365,3 @@ def test_testing__validation_error__bad_request(client, mocker):
         'checker': ['Missing data for required field.']
     }
     service_mock.assert_not_called()
-

@@ -1,5 +1,5 @@
 from typing import Optional, Any
-from src.app.service import messages
+from app.service import messages
 
 
 class ServiceException(Exception):
